@@ -119,6 +119,46 @@ class NumpyTest(unittest.TestCase):
         self.assertEqual(img3[2, 2], 0)
         self.assertEqual(img3[10, 10], 0)
 
+    def test_file_text(self):
+        arr = np.array([(1, 2, 3), (4, 5, 6)])
+        np.savetxt('text_file_text.txt', arr)
+
+        arr = np.loadtxt('text_file_text.txt')
+        self.assertEqual(arr[1, 2], 6)
+
+    def test_file_bin(self):
+        # Creating a large array to a binary file
+        # numpy save and load (savez and loadz in zip mode)
+        # format only with itself. Portable version is scipy.io
+        data = np.empty((10, 10))
+        np.save('test_file_bin.npy', data)
+        newdata = np.load('test_file_bin.npy')
+        self.assertEqual(newdata.shape, (10, 10))
+
+    def test_math(self):
+        # Using numpy.array is faster and less erroneous
+        a = np.array([[3, 6, -5],
+                      [1, -3, 2],
+                      [5, -1, 4]])
+        b = np.array([12, -2, 10])
+        x = np.linalg.inv(a).dot(b)
+        self.assertAlmostEqual(x[0], 1.75, delta=1e-6)
+        self.assertAlmostEqual(x[1], 1.75, delta=1e-6)
+        self.assertAlmostEqual(x[2], 0.75, delta=1e-6)
+
+        # It is not wise to mix numpy.array and numpy.matrix
+        # matrix is subclass of array
+        A = np.matrix([[3, 6, -5],
+                       [1, -3, 2],
+                       [5, -1, 4]])
+        B = np.matrix([[12],
+                       [-2],
+                       [10]])
+        X = A ** (-1) * B
+        self.assertAlmostEqual(X[0], 1.75, delta=1e-6)
+        self.assertAlmostEqual(X[1], 1.75, delta=1e-6)
+        self.assertAlmostEqual(X[2], 0.75, delta=1e-6)
+
 
 if __name__ == '__main__':
     unittest.main()
