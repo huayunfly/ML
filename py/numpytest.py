@@ -1,5 +1,6 @@
 import unittest
 import datetime
+import timeit
 import numpy as np
 
 
@@ -23,6 +24,21 @@ class NumpyTest(unittest.TestCase):
             larr[i] = val * scalar
         end = datetime.datetime.now()
         print('list array times cost: %s' % (end - begin))
+
+    def test_perf2(self):
+        normal_py_sec = timeit.timeit('sum(x * x for x in range(1000))', number=10000)
+        native_np_sec = timeit.timeit(
+            'sum(na * na)', 
+            setup='import numpy as np; na = np.arange(1000)', 
+            number=10000)
+        good_np_sec = timeit.timeit(
+            'na.dot(na)',
+            setup='import numpy as np; na = np.arange(1000)', 
+            number=10000)
+        
+        print('Normal Python Multi-Sum: %f sec' % normal_py_sec)
+        print('Native Numpy Multi-Sum: %f sec' % native_np_sec)
+        print('Good Numpy Multi-Sum: %f sec' % good_np_sec)
 
     def test_create(self):
         alist = [1, 2, 3]
