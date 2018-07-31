@@ -8,8 +8,10 @@ import os
 import unittest
 import scipy as sp
 import nltk.stem
+import sklearn.datasets  # for 20Newsgroups, also gets http://mlcomp.org/datasets/379
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
 
 
 def dist_raw(v1, v2):
@@ -92,6 +94,50 @@ class ClusterTest(unittest.TestCase):
                 best_dist = d
                 best_i = i
         print('Best post is {0:d} with dist={1:.2f}'.format(best_i, best_dist))
+
+    def test_kmeans(self):
+        """
+        20newsgroups for clustering. We use categories to limit the dataset size.
+        """
+        groups = ['comp.graphics', 'comp.os.ms-windows.misc',
+                  'comp.sys.ibm.pc.hardware', 'comp.sys.mac.hardware',
+                  'comp.windows.x', 'sci.space']
+
+        train_data = sklearn.datasets.fetch_20newsgroups(
+            subset='train', categories=groups)
+        test_data = sklearn.datasets.fetch_20newsgroups(
+            subset='test', categories=groups)
+
+        vectorizer = StemmedTfidfVectorizer(min_df=10, max_df=0.5,
+                                            stop_words='english', decode_error='ignore')
+        vectorized = vectorizer.fit_transform(train_data.data)
+        num_samples, num_features = vectorized.shape
+        print('#samples: {0:d}, #features: {1:d}'.format(
+            num_samples, num_features))
+
+        # Clustering fit
+        num_clusters = 50
+        km = KMeans(n_clusters=num_clusters,
+                    init='random', n_init=1, verbose=1, random_state=3)
+        km.fit(vectorized)
+
+        # Clustering transform
+        new_post = """Disk drive problems. Hi, I have a problem with my hard disk.
+        After 1 year it is working only sporadically now.
+        I tried to format it, but now it doesn't boot any more.
+        Any idea? Thanks."""
+        new_post_vec = vectorizer.transform([new_post])
+        new_post_label = km.predict(new_post_vec)[0]
+
+        # km.labels_ , new_post_label is the same dimension.
+        similar_indices = (km.labels_ == new_post_label).nonzero()[0]
+        similar = []
+        for i in similar_indices:
+            dist = dist_raw(new_post_vec, vectorized[i].toarray())
+            similar.append((dist, train_data.data[i]))
+        similar = sorted(similar)
+        print('Similar position {0:d}, similarity {1:.3f}, content {2:s}'.format(
+            1, similar[0][0], similar[0][1]))
 
 
 if __name__ == '__main__':
