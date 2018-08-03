@@ -19,6 +19,7 @@ def dist_raw(v1, v2):
     A primary distance function using Euclidean norm.
     """
     delta = v1 - v2
+    # Convert the sparse matrix to Numpy array using toarray()
     return sp.linalg.norm(delta.toarray())
 
 
@@ -120,6 +121,7 @@ class ClusterTest(unittest.TestCase):
         km = KMeans(n_clusters=num_clusters,
                     init='random', n_init=1, verbose=1, random_state=3)
         km.fit(vectorized)
+        self.assertEqual(km.labels_.shape[0], num_samples)
 
         # Clustering transform
         new_post = """Disk drive problems. Hi, I have a problem with my hard disk.
@@ -128,16 +130,17 @@ class ClusterTest(unittest.TestCase):
         Any idea? Thanks."""
         new_post_vec = vectorizer.transform([new_post])
         new_post_label = km.predict(new_post_vec)[0]
+        print('new_post_label: {0:d}'.format(new_post_label))
 
         # km.labels_ , new_post_label is the same dimension.
         similar_indices = (km.labels_ == new_post_label).nonzero()[0]
         similar = []
         for i in similar_indices:
-            dist = dist_raw(new_post_vec, vectorized[i].toarray())
+            dist = dist_raw(new_post_vec, vectorized[i])
             similar.append((dist, train_data.data[i]))
         similar = sorted(similar)
         print('Similar position {0:d}, similarity {1:.3f}, content {2:s}'.format(
-            1, similar[0][0], similar[0][1]))
+            0, similar[0][0], similar[0][1]))
 
 
 if __name__ == '__main__':
